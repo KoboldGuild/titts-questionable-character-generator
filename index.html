@@ -1,0 +1,1519 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Titt's Questionably Reliable Character Generator</title>
+  <style>
+    :root {
+      --ink: #073f37;
+      --green: #005244;
+      --mint: #41bea6;
+      --cream: #efefdc;
+      --magenta: #aa1b87;
+      --paper: #fffdf4;
+      --line: rgba(0, 82, 68, 0.28);
+      --shadow: 0 12px 30px rgba(0, 82, 68, 0.10);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    .page {
+      width: min(880px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 42px 0 56px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .badge {
+      width: 82px;
+      height: 82px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      background: var(--green);
+      color: var(--cream);
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      border: 4px solid var(--mint);
+      box-shadow: var(--shadow);
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2.2rem, 6vw, 4.4rem);
+      line-height: 0.94;
+      color: var(--green);
+    }
+
+    .subtitle {
+      max-width: 640px;
+      margin: 14px auto 0;
+      font-size: 1rem;
+      line-height: 1.6;
+      opacity: 0.82;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 24px 0 22px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary {
+      background: var(--magenta);
+      color: white;
+      box-shadow: 0 8px 20px rgba(170, 27, 135, 0.22);
+    }
+
+    .secondary {
+      background: var(--green);
+      color: var(--cream);
+    }
+
+    .ghost {
+      background: transparent;
+      color: var(--green);
+      border: 2px solid var(--green);
+    }
+
+    .generator {
+      display: grid;
+      gap: 10px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: minmax(145px, 205px) minmax(0, 1fr) 46px 46px;
+      align-items: stretch;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--paper);
+      box-shadow: 0 4px 14px rgba(0, 82, 68, 0.045);
+    }
+
+    .label {
+      appearance: none;
+      border: 0;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 15px 16px;
+      background: var(--mint);
+      color: var(--green);
+      font: inherit;
+      font-weight: 900;
+      line-height: 1.15;
+      text-align: left;
+      cursor: pointer;
+      transition: background 120ms ease, transform 120ms ease;
+    }
+
+    .label:hover {
+      background: rgba(65, 190, 166, 0.78);
+      transform: none;
+    }
+
+    .label:active {
+      background: rgba(65, 190, 166, 0.9);
+      transform: none;
+    }
+
+    .value {
+      display: flex;
+      align-items: center;
+      min-height: 56px;
+      padding: 14px 16px;
+      color: #183f38;
+      line-height: 1.35;
+      background: var(--paper);
+    }
+
+    .icon-btn {
+      width: 100%;
+      height: 100%;
+      min-height: 56px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      border-radius: 0;
+      background: rgba(65, 190, 166, 0.10);
+      color: var(--green);
+      font-size: 1rem;
+      border-left: 1px solid rgba(0, 82, 68, 0.12);
+    }
+
+    .icon-btn:hover {
+      background: rgba(65, 190, 166, 0.22);
+    }
+
+    .delete-btn {
+      background: rgba(170, 27, 135, 0.06);
+      color: var(--magenta);
+    }
+
+    .delete-btn:hover {
+      background: rgba(170, 27, 135, 0.14);
+    }
+
+    .icon-btn.locked {
+      background: var(--green);
+      color: var(--cream);
+    }
+
+    .note {
+      text-align: center;
+      font-size: 0.86rem;
+      opacity: 0.7;
+      margin: 20px 0 0;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: var(--green);
+      color: var(--cream);
+      font-weight: 800;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+      z-index: 50;
+    }
+
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 680px) {
+      .page { width: min(100% - 14px, 880px); padding-top: 26px; }
+      .row {
+        grid-template-columns: minmax(96px, 118px) minmax(0, 1fr) 38px 38px;
+      }
+      .label {
+        padding: 10px;
+        font-size: 0.82rem;
+      }
+      .value {
+        min-height: 54px;
+        padding: 10px;
+        font-size: 0.88rem;
+        overflow-wrap: anywhere;
+      }
+      .icon-btn {
+        min-height: 54px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <h1>Titt's Questionably Reliable<br>Character Generator</h1>
+      <p class="subtitle">Need a hero? Titt has made some decisions. Generate a complete D&amp;D character concept, keep the bits you like, and reroll the questionable ones. Now with a much bigger pool of questionable decisions.</p>
+    </header>
+
+    <div class="controls">
+      <button class="primary" id="generateAll">Generate Character</button>
+      <button class="secondary" id="clearAll">Clear All</button>
+      <button class="secondary" id="unlockAll">Unlock All</button>
+      <button class="ghost" id="copyCharacter">Copy Character</button>
+    </div>
+
+    <section class="generator" id="generator" aria-live="polite"></section>
+    <p class="note">Click a category name to roll only that result. 🔒 Lock it to keep it. ✕ clears only that row. Subclass uses the selected Class.</p>
+  </main>
+
+  <div class="toast" id="toast">Copied!</div>
+
+<script>
+  const DATA = {
+    genders: [
+      "Male",
+      "Male (cis)",
+      "Male (trans)",
+      "Male (intersex)",
+      "Female",
+      "Female (cis)",
+      "Female (trans)",
+      "Female (intersex)",
+      "Non-binary",
+      "Non-binary (trans)",
+      "Non-binary (intersex)",
+      "Eldritch Abomination",
+      "Eldritch Abomination (cosmic being)"
+    ],
+
+    species: [
+      "Aarakocra",
+      "Aasimar",
+      "Astral Elf",
+      "Autognome",
+      "Bugbear",
+      "Centaur",
+      "Changeling",
+      "Deep Gnome",
+      "Dhampir",
+      "Dragonborn",
+      "Duergar",
+      "Dwarf",
+      "Eladrin",
+      "Elf",
+      "Fairy",
+      "Firbolg",
+      "Genasi",
+      "Giff",
+      "Githyanki",
+      "Githzerai",
+      "Gnome",
+      "Goblin",
+      "Goliath",
+      "Grung",
+      "Hadozee",
+      "Half-Elf",
+      "Half-Orc",
+      "Halfling",
+      "Harengon",
+      "Hexblood",
+      "Hobgoblin",
+      "Human",
+      "Kalashtar",
+      "Kender",
+      "Kenku",
+      "Kobold",
+      "Leonin",
+      "Lizardfolk",
+      "Locathah",
+      "Loxodon",
+      "Minotaur",
+      "Orc",
+      "Owlin",
+      "Plasmoid",
+      "Reborn",
+      "Satyr",
+      "Sea Elf",
+      "Shadar-kai",
+      "Shifter",
+      "Simic Hybrid",
+      "Tabaxi",
+      "Thri-kreen",
+      "Tiefling",
+      "Tortle",
+      "Triton",
+      "Vedalken",
+      "Verdan",
+      "Warforged",
+      "Yuan-ti"
+    ],
+
+    classes: [
+      "Artificer",
+      "Barbarian",
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Fighter",
+      "Monk",
+      "Paladin",
+      "Ranger",
+      "Rogue",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+
+    subclasses: {
+      "Artificer": ["Alchemist", "Armorer", "Artillerist", "Battle Smith"],
+      "Barbarian": ["Path of the Ancestral Guardian", "Path of the Battlerager", "Path of the Beast", "Path of the Berserker", "Path of the Giant", "Path of the Storm Herald", "Path of the Totem Warrior", "Path of Wild Magic", "Path of the Zealot", "Path of the World Tree"],
+      "Bard": ["College of Creation", "College of Dance", "College of Eloquence", "College of Glamour", "College of Lore", "College of Spirits", "College of Swords", "College of Valor", "College of Whispers"],
+      "Cleric": ["Arcana Domain", "Death Domain", "Forge Domain", "Grave Domain", "Knowledge Domain", "Life Domain", "Light Domain", "Nature Domain", "Order Domain", "Peace Domain", "Tempest Domain", "Trickery Domain", "Twilight Domain", "War Domain"],
+      "Druid": ["Circle of Dreams", "Circle of the Land", "Circle of the Moon", "Circle of the Shepherd", "Circle of Spores", "Circle of Stars", "Circle of Wildfire", "Circle of the Sea"],
+      "Fighter": ["Arcane Archer", "Battle Master", "Cavalier", "Champion", "Echo Knight", "Eldritch Knight", "Psi Warrior", "Purple Dragon Knight", "Rune Knight", "Samurai"],
+      "Monk": ["Way of Mercy", "Way of Shadow", "Way of the Astral Self", "Way of the Drunken Master", "Way of the Four Elements", "Way of the Kensei", "Way of the Long Death", "Way of the Open Hand", "Way of the Sun Soul"],
+      "Paladin": ["Oath of the Ancients", "Oath of Conquest", "Oath of the Crown", "Oath of Devotion", "Oath of Glory", "Oath of Redemption", "Oath of Vengeance", "Oath of the Watchers", "Oathbreaker"],
+      "Ranger": ["Beast Master", "Drakewarden", "Fey Wanderer", "Gloom Stalker", "Horizon Walker", "Hunter", "Monster Slayer", "Swarmkeeper"],
+      "Rogue": ["Arcane Trickster", "Assassin", "Inquisitive", "Mastermind", "Phantom", "Scout", "Soulknife", "Swashbuckler", "Thief"],
+      "Sorcerer": ["Aberrant Mind", "Clockwork Soul", "Divine Soul", "Draconic Bloodline", "Lunar Sorcery", "Shadow Magic", "Storm Sorcery", "Wild Magic"],
+      "Warlock": ["The Archfey", "The Celestial", "The Fathomless", "The Fiend", "The Genie", "The Great Old One", "The Hexblade", "The Undead", "The Undying"],
+      "Wizard": ["Bladesinging", "Chronurgy Magic", "Graviturgy Magic", "Order of Scribes", "School of Abjuration", "School of Conjuration", "School of Divination", "School of Enchantment", "School of Evocation", "School of Illusion", "School of Necromancy", "School of Transmutation", "War Magic"]
+    },
+
+    alignments: [
+      "Lawful Good",
+      "Neutral Good",
+      "Chaotic Good",
+      "Lawful Neutral",
+      "True Neutral",
+      "Chaotic Neutral",
+      "Lawful Evil",
+      "Neutral Evil",
+      "Chaotic Evil",
+      "It's complicated",
+      "Depends who is asking"
+    ],
+
+    worships: [
+      "Amaunator",
+      "Auril",
+      "Azuth",
+      "Bahamut",
+      "Bane",
+      "Beshaba",
+      "Chauntea",
+      "Corellon",
+      "Cyric",
+      "Deneir",
+      "Eldath",
+      "Gond",
+      "Gruumsh",
+      "Helm",
+      "Ilmater",
+      "Kelemvor",
+      "Lathander",
+      "Leira",
+      "Lolth",
+      "Loviatar",
+      "Malar",
+      "Mask",
+      "Milil",
+      "Moradin",
+      "Mystra",
+      "Oghma",
+      "Savras",
+      "Selûne",
+      "Shar",
+      "Silvanus",
+      "Sune",
+      "Talona",
+      "Talos",
+      "Tempus",
+      "Tiamat",
+      "Torm",
+      "Tymora",
+      "Tyr",
+      "Umberlee",
+      "Waukeen",
+      "Asmodeus",
+      "Avandra",
+      "Bahamut's teachings rather than Bahamut himself",
+      "Boccob",
+      "Ehlonna",
+      "Erathis",
+      "Ioun",
+      "Kord",
+      "Melora",
+      "Pelor",
+      "The Raven Queen",
+      "Vecna",
+      "Zehir",
+      "Nothing",
+      "Themselves",
+      "Their spouse",
+      "Their ex",
+      "Their mum",
+      "Their dad",
+      "Their grandmother",
+      "Their adventuring party",
+      "Money",
+      "Luck",
+      "Fate",
+      "The universe",
+      "The moon",
+      "The sun",
+      "The sea",
+      "A fish named Bob",
+      "Dave",
+      "A local pub",
+      "Breakfast",
+      "A mildly impressive tree",
+      "A suspiciously charismatic pigeon",
+      "A sword they found once",
+      "The concept of naps",
+      "Cheese",
+      "Whoever answers first",
+      "Whichever deity seems useful that day",
+      "Several gods at once, just to be safe",
+      "Claims to worship nobody but still prays when frightened",
+      "A deity they have completely misunderstood",
+      "A deity that may or may not actually exist",
+      "Their own future self",
+      "The memory of someone they lost",
+      "A tiny household shrine to an unnamed god",
+      "A rock with a face painted on it",
+      "Soup",
+      "Adventure itself",
+      "Their pet",
+      "Their horse",
+      "A dead hero they idolise",
+      "Whatever lives at the bottom of the well",
+      "The stars, but not in a normal way"
+    ],
+
+    personalities: [
+      "Black cat",
+      "Golden retriever",
+      "Orange cat",
+      "Wet cat",
+      "Golden retriever with anxiety",
+      "Black cat who secretly wants affection",
+      "Suspicious alley cat",
+      "Loyal guard dog",
+      "Excitable puppy",
+      "Tired dad",
+      "Wine aunt",
+      "Overprotective mum friend",
+      "Cool aunt",
+      "Eldest sibling",
+      "Middle child",
+      "Youngest sibling",
+      "Only child energy",
+      "Chaos gremlin",
+      "Cinnamon roll",
+      "Himbo",
+      "Bimbo with hidden depths",
+      "Mean girl with a heart of gold",
+      "Sunshine incarnate",
+      "Storm cloud",
+      "Grumpy old man",
+      "Grumpy old woman",
+      "Victorian ghost",
+      "Friendly neighbourhood cryptid",
+      "Ferret with a knife",
+      "Goblin with access to money",
+      "Raccoon in a waistcoat",
+      "Possum playing dead emotionally",
+      "Crow that learned sarcasm",
+      "Overachieving prefect",
+      "Theatre kid",
+      "Band kid",
+      "Horse girl",
+      "Perpetually exhausted academic",
+      "Quiet librarian",
+      "Mad scientist",
+      "Conspiracy theorist who is unfortunately right",
+      "Disaster academic",
+      "Gifted child burnout",
+      "Excitable nerd",
+      "Know-it-all with receipts",
+      "Stoic protector",
+      "Reluctant hero",
+      "Hopeless romantic",
+      "Jaded romantic",
+      "Serial optimist",
+      "Perpetual pessimist",
+      "Moral compass of the group",
+      "Bad influence of the group",
+      "Team mum",
+      "Team dad",
+      "Team menace",
+      "Team therapist",
+      "Extrovert who adopts introverts",
+      "Introvert adopted by an extrovert",
+      "Socially awkward sweetheart",
+      "Charming menace",
+      "Polite menace",
+      "Tiny ball of rage",
+      "Gentle giant",
+      "Big softie",
+      "Short king energy",
+      "Main character energy",
+      "Background character who keeps surviving",
+      "Retired adventurer who has seen too much",
+      "New recruit with too much confidence",
+      "Professional disaster",
+      "Functional disaster",
+      "Competent until flirted with",
+      "Looks intimidating, is actually lovely",
+      "Looks harmless, absolutely is not",
+      "Looks harmless and genuinely is",
+      "Looks villainous, volunteers at soup kitchens",
+      "Princess energy",
+      "Knight energy",
+      "Court jester energy",
+      "Witch in the woods energy",
+      "Sleep-deprived healer",
+      "Overconfident rogue",
+      "Paladin with customer service voice",
+      "Barbarian with excellent manners",
+      "Wizard who treats everything like homework",
+      "Bard who desperately wants silence",
+      "Rogue who cannot lie convincingly",
+      "Cleric who is tired of everyone's nonsense",
+      "Druid who likes animals more than people",
+      "Adventurer powered entirely by spite",
+      "Adventurer powered entirely by snacks",
+      "Adventurer powered entirely by friendship",
+      "Adventurer powered entirely by bad ideas"
+    ],
+
+    backgrounds: [
+      "Acolyte",
+      "Anthropologist",
+      "Archaeologist",
+      "Artisan",
+      "Charlatan",
+      "City Watch",
+      "Clan Crafter",
+      "Cloistered Scholar",
+      "Courtier",
+      "Criminal",
+      "Entertainer",
+      "Faceless",
+      "Far Traveler",
+      "Farmer",
+      "Fisher",
+      "Folk Hero",
+      "Gladiator",
+      "Guard",
+      "Guild Artisan",
+      "Guild Merchant",
+      "Haunted One",
+      "Hermit",
+      "Investigator",
+      "Marine",
+      "Mercenary Veteran",
+      "Merchant",
+      "Noble",
+      "Outlander",
+      "Pirate",
+      "Sage",
+      "Sailor",
+      "Scribe",
+      "Shipwright",
+      "Smuggler",
+      "Soldier",
+      "Spy",
+      "Urban Bounty Hunter",
+      "Urchin",
+      "Wayfarer"
+    ],
+
+    stats: ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"],
+
+    hair: [
+      "Black",
+      "Blue-black",
+      "Dark brown",
+      "Chocolate brown",
+      "Chestnut brown",
+      "Light brown",
+      "Auburn",
+      "Copper",
+      "Ginger",
+      "Strawberry blonde",
+      "Honey blonde",
+      "Golden blonde",
+      "Ash blonde",
+      "Platinum blonde",
+      "Salt-and-pepper",
+      "Grey",
+      "Silver",
+      "White",
+      "Rose gold",
+      "Dusty pink",
+      "Hot pink",
+      "Magenta",
+      "Scarlet",
+      "Crimson",
+      "Orange",
+      "Sunflower yellow",
+      "Lime green",
+      "Emerald green",
+      "Forest green",
+      "Mint green",
+      "Teal",
+      "Turquoise",
+      "Cyan",
+      "Sky blue",
+      "Royal blue",
+      "Navy",
+      "Lavender",
+      "Violet",
+      "Purple",
+      "Black with a white streak",
+      "Brown with silver streaks",
+      "White with black roots",
+      "Half black, half white",
+      "Half pink, half blue",
+      "Rainbow dyed",
+      "Pastel rainbow",
+      "Sunset ombré",
+      "Ocean ombré",
+      "Dip-dyed ends",
+      "Patchy home dye job",
+      "Changes colour with mood",
+      "Changes colour with the weather",
+      "Looks like flame",
+      "Looks like smoke",
+      "Looks like running water",
+      "Star-speckled",
+      "Glowing white",
+      "Glowing blue",
+      "Metallic silver",
+      "Translucent",
+      "Bioluminescent tips",
+      "Completely bald",
+      "Shaved to stubble",
+      "Patchy",
+      "No hair, but insists the horns count",
+      "Feathers instead of hair",
+      "Leaves instead of hair",
+      "Soft moss instead of hair",
+      "Tiny snakes instead of hair"
+    ],
+
+    skinHumanlike: [
+      "Porcelain pale",
+      "Very pale",
+      "Pale with cool undertones",
+      "Pale with warm undertones",
+      "Fair",
+      "Peach",
+      "Light beige",
+      "Warm beige",
+      "Cool beige",
+      "Golden beige",
+      "Light olive",
+      "Olive",
+      "Deep olive",
+      "Golden tan",
+      "Warm tan",
+      "Caramel",
+      "Golden brown",
+      "Medium brown",
+      "Warm brown",
+      "Cool brown",
+      "Reddish brown",
+      "Chestnut brown",
+      "Deep brown",
+      "Dark brown",
+      "Very deep brown",
+      "Ebony brown"
+    ],
+
+    skinFantasy: [
+      "Crimson",
+      "Scarlet",
+      "Brick red",
+      "Burgundy",
+      "Wine red",
+      "Rose",
+      "Dusty pink",
+      "Lavender",
+      "Lilac",
+      "Purple",
+      "Violet",
+      "Indigo",
+      "Powder blue",
+      "Sky blue",
+      "Deep blue",
+      "Turquoise",
+      "Teal",
+      "Sea green",
+      "Mint green",
+      "Moss green",
+      "Forest green",
+      "Emerald green",
+      "Sage green",
+      "Ochre",
+      "Mustard yellow",
+      "Ivory",
+      "Pearlescent white",
+      "Cloud grey",
+      "Silver grey",
+      "Slate",
+      "Charcoal",
+      "Obsidian",
+      "Gold",
+      "Rose gold",
+      "Silver",
+      "Copper",
+      "Bronze",
+      "Brass",
+      "Iridescent",
+      "Opalescent",
+      "Translucent",
+      "Porcelain-like",
+      "Stone-like",
+      "Marble-patterned",
+      "Bark-like",
+      "Moss-covered",
+      "Starfield black",
+      "Black with glowing freckles",
+      "White with gold veining",
+      "Blue with silver speckles",
+      "Green with mottled patches",
+      "Red with dark marbling"
+    ],
+
+    heights: [
+      "Tiny by their species' standards",
+      "Very short",
+      "Short",
+      "Below average height",
+      "Average height",
+      "Slightly above average height",
+      "Tall",
+      "Very tall",
+      "Towering",
+      "Comically tall"
+    ],
+    builds: [
+      "very slender",
+      "slender",
+      "wiry",
+      "lean",
+      "rangy",
+      "athletic",
+      "toned",
+      "muscular",
+      "heavily muscular",
+      "broad",
+      "stocky",
+      "soft",
+      "plush",
+      "fat",
+      "very fat",
+      "compact",
+      "lanky",
+      "solidly built",
+      "delicate-looking",
+      "powerfully built"
+    ],
+    shapes: [
+      "broad-shouldered",
+      "narrow-shouldered",
+      "pear-shaped",
+      "barrel-chested",
+      "round-bellied",
+      "long-limbed",
+      "short-limbed",
+      "sturdy",
+      "fine-boned",
+      "top-heavy",
+      "bottom-heavy",
+      "straight-bodied",
+      "wide-hipped",
+      "thick-thighed",
+      "long-torsoed",
+      "short-torsoed",
+      "big-armed",
+      "soft-bellied",
+      "square-built",
+      "surprisingly tiny-waisted"
+    ],
+
+    fashion: [
+      "Practical travelling clothes",
+      "Simple tunic and trousers",
+      "Heavy layered wool",
+      "Weatherproof cloak and sturdy boots",
+      "Rough workwear",
+      "Well-worn farm clothes",
+      "Patched clothes repaired dozens of times",
+      "Clean, practical linen layers",
+      "Loose desert robes",
+      "Heavy winter furs",
+      "Sailor's clothes",
+      "Riding clothes",
+      "Immaculate court tailoring",
+      "Expensive embroidered robes",
+      "Ceremonial clothing",
+      "Military dress uniform",
+      "Religious vestments",
+      "Scholarly robes",
+      "Formal mourning wear",
+      "Old-fashioned aristocratic clothes",
+      "Gothic mourning clothes",
+      "Romantic flowing layers",
+      "Punk leather and metal",
+      "Bright mismatched fabrics",
+      "Monochrome from head to toe",
+      "Cottagecore linen and embroidery",
+      "Soft oversized knitwear",
+      "Flamboyant jewel tones",
+      "Delicate lace and ribbons",
+      "Sharp minimalist tailoring",
+      "Maximalist layers and jewellery",
+      "Everything has pockets",
+      "Wears far too many belts",
+      "Refuses to wear sleeves",
+      "Refuses to wear shoes",
+      "Armour over formal eveningwear",
+      "Dressed permanently for a funeral",
+      "Dressed permanently for a party",
+      "Everything is several sizes too big",
+      "Everything is several sizes too small",
+      "Jewellery on every available surface",
+      "One beautiful coat built into every outfit",
+      "Nudist, but has conceded to wearing a loincloth",
+      "Insists a cape counts as an entire outfit",
+      "Wears a blanket and calls it fashion",
+      "Every garment came from a different dead adventurer",
+      "Looks expensive until you notice everything is held together with safety pins",
+      "Dresses beautifully but is always covered in mud",
+      "Owns one outfit and washes it whenever someone complains",
+      "Has somehow made pyjamas look formal",
+      "Wears armour incorrectly but with great confidence",
+      "Dresses according to what was closest to the bed that morning",
+      "Refuses to wear anything without embroidery",
+      "Always wears gloves",
+      "Always wears a hat, even indoors",
+      "Only wears clothes they made themselves",
+      "Collects scarves and wears several at once",
+      "Wears an enormous coat with nothing useful in the pockets",
+      "Looks like they are perpetually on their way to a wedding",
+      "Looks like they are perpetually on their way to rob a bank",
+      "Everything is black except one aggressively colourful accessory",
+      "Everything is cream and beige despite living in constant mud",
+      "Wears trophies from previous adventures",
+      "Clothes covered in tiny hand-sewn charms",
+      "Half practical adventurer, half theatre costume",
+      "Dresses like an eccentric professor",
+      "Dresses like a disgraced noble trying to look inconspicuous",
+      "Dresses like a noble despite having no money",
+      "Dresses like they have money despite having none",
+      "Wears layers specifically to hide how many knives they carry",
+      "Has a suspicious number of hidden pockets",
+      "Refuses trousers on principle",
+      "Refuses skirts on principle",
+      "Always wears an apron over everything",
+      "Wears a veil for entirely aesthetic reasons",
+      "Wears flowers in their hair every day",
+      "Clothes are immaculate; boots are always filthy",
+      "Wears battered hand-me-downs with great affection",
+      "Only wears clothing in their favourite colour",
+      "Changes aesthetic every few days",
+      "Dresses for comfort and absolutely nothing else"
+    ],
+
+    weapons: [
+      "Longsword",
+      "Shortsword",
+      "Greatsword",
+      "Rapier",
+      "Scimitar",
+      "Dagger",
+      "Handaxe",
+      "Battleaxe",
+      "Greataxe",
+      "Mace",
+      "Morningstar",
+      "Warhammer",
+      "Maul",
+      "Spear",
+      "Javelin",
+      "Trident",
+      "Pike",
+      "Glaive",
+      "Halberd",
+      "Quarterstaff",
+      "Club",
+      "Greatclub",
+      "Sickle",
+      "Whip",
+      "Shortbow",
+      "Longbow",
+      "Light crossbow",
+      "Heavy crossbow",
+      "Hand crossbow",
+      "Sling",
+      "Darts",
+      "Fists",
+      "Elbows",
+      "Knees",
+      "Headbutts",
+      "Claws",
+      "Teeth",
+      "Horns",
+      "Tail",
+      "Frying pan",
+      "Kettle",
+      "Rolling pin",
+      "Chair leg",
+      "Table leg",
+      "Shovel",
+      "Broom",
+      "Brick",
+      "Broken bottle",
+      "Mug",
+      "Soup ladle",
+      "Cast-iron skillet",
+      "Candlestick",
+      "Fireplace poker",
+      "Walking stick",
+      "Umbrella",
+      "A very heavy book",
+      "A sack of coins",
+      "An aggressively sharpened spoon",
+      "A rock they found years ago",
+      "A length of chain",
+      "A plank with a nail in it",
+      "A boot",
+      "A tankard",
+      "A cooking pot",
+      "A meat cleaver",
+      "A pair of scissors",
+      "A shepherd's crook",
+      "A fishing rod",
+      "A musical instrument",
+      "A bar stool",
+      "A door they ripped off its hinges",
+      "Whatever is closest",
+      "Anything except the perfectly good weapon they are carrying"
+    ],
+
+    fears: [
+      "Drowning",
+      "Fire",
+      "Being buried alive",
+      "Abandonment",
+      "Losing control",
+      "Disease",
+      "Failure",
+      "Being forgotten",
+      "Losing someone they love",
+      "Becoming powerless",
+      "Being trapped",
+      "Being alone",
+      "Being watched",
+      "Being unable to protect someone",
+      "Being recognised",
+      "Growing old",
+      "Death",
+      "Immortality",
+      "Losing their memory",
+      "Becoming like someone they hate",
+      "Heights",
+      "Spiders",
+      "Dogs",
+      "Snakes",
+      "Darkness",
+      "Crowds",
+      "Thunderstorms",
+      "Needles",
+      "Deep water",
+      "Enclosed spaces",
+      "Open spaces",
+      "Blood",
+      "Ghosts",
+      "Undead",
+      "Large insects",
+      "Flying",
+      "Boats",
+      "Horses",
+      "Magic",
+      "Silence",
+      "Rubber ducks",
+      "Spoons",
+      "Geese",
+      "Bananas",
+      "Tiny horses",
+      "Round windows",
+      "Bells",
+      "Garden statues",
+      "Mannequins",
+      "Overly ripe fruit",
+      "Clowns",
+      "Puppets",
+      "Wind chimes",
+      "Moths",
+      "Frogs",
+      "Chickens",
+      "Buttons",
+      "Cheese with holes in it",
+      "Very large hats",
+      "People in matching outfits",
+      "The colour yellow",
+      "The number seven",
+      "Wet socks",
+      "A perfectly ordinary goat",
+      "Someone standing behind them while they eat",
+      "Doors left slightly open",
+      "Hearing their name when nobody called them",
+      "Mirrors in dark rooms",
+      "Rooms with no rugs",
+      "Fish looking directly at them",
+      "People who are excessively polite",
+      "A chair facing the wrong direction",
+      "Portraits whose eyes seem to follow them",
+      "A single shoe left in the road",
+      "Food touching other food on the plate",
+      "Someone saying 'we need to talk'",
+      "Being handed a baby",
+      "Birds indoors",
+      "Long hallways",
+      "Empty theatres"
+    ],
+
+    flaws: [
+      "Cannot admit when they are wrong",
+      "Trusts people far too easily",
+      "Assumes everyone is lying",
+      "Takes every insult personally",
+      "Cannot resist a dare",
+      "Lies whenever they feel embarrassed",
+      "Cannot leave a mystery alone",
+      "Refuses to ask for help",
+      "Spends money as soon as they get it",
+      "Hoards money even when they need to spend it",
+      "Assumes they are the smartest person in the room",
+      "Cannot keep a secret",
+      "Talks over people when excited",
+      "Avoids conflict until everything explodes",
+      "Starts fights they cannot finish",
+      "Cannot apologise properly",
+      "Constantly compares themselves to others",
+      "Will choose curiosity over common sense",
+      "Promises more than they can deliver",
+      "Never knows when to stop talking",
+      "Becomes competitive about absolutely everything",
+      "Believes every problem can be solved with confidence",
+      "Forgives people who absolutely do not deserve it",
+      "Never forgives anyone",
+      "Panics when they are not in control",
+      "Refuses to change plans once they have made one",
+      "Takes criticism as a personal attack",
+      "Cannot resist showing off",
+      "Always volunteers somebody else for dangerous jobs",
+      "Will absolutely press the button marked DO NOT PRESS",
+      "Gets jealous embarrassingly easily",
+      "Cannot walk away from an argument",
+      "Assumes silence means agreement",
+      "Treats every conversation like a negotiation",
+      "Always has to have the last word",
+      "Cannot resist correcting tiny factual errors",
+      "Makes jokes at wildly inappropriate times",
+      "Runs away from emotional conversations",
+      "Mistakes stubbornness for loyalty",
+      "Will defend a terrible decision simply because it was theirs",
+      "Refuses to throw anything away",
+      "Falls in love far too quickly",
+      "Believes obvious flattery",
+      "Cannot accept compliments",
+      "Needs everyone to like them",
+      "Assumes everyone secretly dislikes them",
+      "Cannot say no to people they care about",
+      "Says yes before thinking",
+      "Overplans everything and panics when plans change",
+      "Never plans anything at all",
+      "Cannot resist gossip",
+      "Treats rules as personal challenges",
+      "Follows rules even when they make no sense",
+      "Would rather get hurt than look cowardly",
+      "Would rather look cowardly than get hurt",
+      "Always assumes there is a shortcut",
+      "Cannot stop meddling in other people's problems",
+      "Uses humour to avoid sincerity",
+      "Turns every hobby into a competition",
+      "Gets bored dangerously quickly",
+      "Is convinced luck will eventually solve everything"
+    ],
+
+    quirks: [
+      "Carries emergency cheese",
+      "Names every weapon they own",
+      "Apologises to furniture after bumping into it",
+      "Counts stairs automatically",
+      "Collects buttons",
+      "Keeps a favourite rock",
+      "Talks to animals as if they are colleagues",
+      "Rates every tavern by the quality of its potatoes",
+      "Cannot sit normally in a chair",
+      "Sleeps under the bed instead of on it",
+      "Writes terrible poetry",
+      "Keeps every receipt",
+      "Hums during combat",
+      "Gives everyone a nickname immediately",
+      "Hates one completely normal word for no reason",
+      "Carries a tiny spoon for emergencies",
+      "Refuses to step on cracks",
+      "Always has one spare sock",
+      "Keeps a list of suspicious birds",
+      "Talks in their sleep about taxes",
+      "Knocks on every door exactly three times",
+      "Has a different mug for each day of the week",
+      "Collects teeth but will not explain why",
+      "Always sits facing the door",
+      "Carries snacks for everyone but denies doing it intentionally",
+      "Practises dramatic entrances when nobody is watching",
+      "Says 'interesting' whenever they have no idea what is happening",
+      "Has a favourite spoon",
+      "Secretly judges everyone's handwriting",
+      "Names every horse they meet Gerald",
+      "Carries a notebook of overheard phrases",
+      "Always pockets pretty stones",
+      "Refuses to eat the last bite of anything",
+      "Salutes every statue",
+      "Talks to plants while watering them",
+      "Folds every piece of paper into tiny shapes",
+      "Has a preferred chair in every tavern",
+      "Carries an emergency candle for emotional support",
+      "Always checks under the bed",
+      "Collects keys that no longer open anything",
+      "Keeps pressed flowers in every book",
+      "Invents elaborate backstories for strangers",
+      "Whistles whenever they are lying",
+      "Sings badly while cooking",
+      "Always carries exactly three apples",
+      "Refers to their backpack by name",
+      "Writes reminders on their own hands",
+      "Has a lucky fork",
+      "Keeps a tally of how many doors they have kicked open",
+      "Cannot pass a dog without greeting it",
+      "Always steals the tiny soaps from inns",
+      "Organises coins by shininess",
+      "Refuses to use maps the correct way up",
+      "Collects menus from every tavern they visit",
+      "Has an ongoing feud with one specific goose",
+      "Maintains a ranking of bridges",
+      "Will not sleep unless their boots are lined up perfectly",
+      "Carries a string collection",
+      "Always smells books before reading them",
+      "Has a tiny bell they ring when pleased",
+      "Keeps one pocket exclusively for crumbs",
+      "Refuses to call anyone by their full name",
+      "Taps doorframes for luck",
+      "Always orders the strangest item on the menu",
+      "Collects terrible local souvenirs",
+      "Has strong opinions about soup consistency",
+      "Practises signatures for titles they do not have",
+      "Invents a new handshake for every friend",
+      "Draws moustaches on unwanted portraits",
+      "Always carries chalk",
+      "Counts windows in every room",
+      "Wears mismatched socks deliberately",
+      "Has a dramatic gasp prepared for gossip",
+      "Keeps a personal enemy list that includes several objects",
+      "Cannot resist spinning any unattended coin",
+      "Carries a tiny portrait of someone they claim not to know"
+    ],
+
+    secrets: [
+      "Cannot swim",
+      "Cannot read",
+      "Pretends to like ale",
+      "Their impressive scar came from falling off a chair",
+      "Has never actually used their favourite weapon in a real fight",
+      "Is deeply homesick",
+      "Sends most of their money home",
+      "Their family believes they are dead",
+      "Is travelling under a false name",
+      "Is secretly in love with someone they should not be",
+      "Abandoned someone who needed them",
+      "Stole something extremely valuable",
+      "Once worked for a criminal organisation",
+      "Someone is actively hunting them",
+      "Caused an accident that hurt innocent people",
+      "Knows the villain personally",
+      "Is carrying a cursed object and does not know it",
+      "Is heir to something dangerous",
+      "Has ties to a cult they escaped",
+      "Remembers a place that officially never existed",
+      "Their patron has lied about who they really are",
+      "They are technically wanted in three towns",
+      "Their heroic reputation is based on a misunderstanding",
+      "They have been using somebody else's identity",
+      "They know exactly where the missing treasure is",
+      "They once betrayed a friend to save themselves",
+      "They are secretly much richer than they pretend",
+      "They are secretly much poorer than they pretend",
+      "They are writing a wildly inaccurate memoir about the party",
+      "They are convinced one party member is destined to kill them",
+      "They are afraid of their own magic",
+      "They secretly miss their old life",
+      "They have a child they have never met",
+      "They are engaged to someone back home",
+      "They ran away from an arranged marriage",
+      "They were expelled from an academy",
+      "They were never actually ordained",
+      "Their noble title is fake",
+      "Their noble title is real, but they pretend it is fake",
+      "They cheated to pass an important test",
+      "They once stole from a temple",
+      "They owe a dangerous person a large amount of money",
+      "They are protecting someone under a false identity",
+      "They know a supposedly dead person is alive",
+      "They know a supposedly living person is dead",
+      "They once saw something nobody believes exists",
+      "They have been receiving letters from someone who died years ago",
+      "They are secretly terrified of adventuring",
+      "They joined the party to spy on someone",
+      "They were originally sent to sabotage the party",
+      "They have met one of the party members before but will not admit it",
+      "They are related to a notorious criminal",
+      "They are related to someone famous and hate mentioning it",
+      "They have a second family nobody knows about",
+      "They used to be part of a rival adventuring group",
+      "They stole their favourite weapon",
+      "Their favourite weapon belongs to someone they killed",
+      "Their favourite weapon is actually a sentimental family heirloom",
+      "They cannot remember an entire year of their life",
+      "They have recurring dreams that later come true",
+      "They have made a bargain they deeply regret",
+      "They know the location of a hidden portal",
+      "They are secretly immune to something they pretend to fear",
+      "They lied about why they became an adventurer",
+      "They were once legally declared dead",
+      "They are wanted under a completely different name",
+      "They accidentally started a religion",
+      "They are the anonymous author of a scandalous book",
+      "They secretly write love letters for other people",
+      "They have a map tattooed somewhere nobody usually sees",
+      "They know how the party's current problem started",
+      "They are hiding a small fortune in a very stupid place",
+      "They are secretly responsible for a local legend",
+      "They have no idea what their own real name is"
+    ],
+
+    eldritchHair: [
+      "Soft black tendrils pretending to be hair", "A cloud of floating silver threads", "Tiny constellations", "Smoke that curls upward forever", "An empty patch of night sky", "Hair that moves a second before they do"
+    ],
+
+    eldritchSkin: [
+      "The colour of a memory you cannot quite place", "Void-black with tiny stars", "Translucent with something moving underneath", "Changes colour when unobserved", "A hue nobody agrees on", "Reflects a sky from somewhere else"
+    ],
+
+    eldritchBody: [
+      "Approximately humanoid", "Too many angles", "Suspiciously symmetrical", "Tall, elegant and one joint too long everywhere", "Compact and geometrically inadvisable", "Appears normal until viewed from the side"
+    ],
+
+    eldritchQuirks: [
+      "Occasionally forgets gravity applies to them", "Blinks one eye at a time in a circle", "Stares at corners as if someone is standing there", "Does not understand doors", "Refers to the moon by a personal nickname",
+      "Laughs a few seconds before the joke is told", "Leaves footprints facing the wrong direction", "Asks chairs for permission before sitting", "Sometimes answers questions nobody asked"
+    ],
+
+    eldritchSecrets: [
+      "It thinks everyone else is the eldritch abomination", "This is not its first universe", "It is pretending to understand mortality", "It came here by accident and is too embarrassed to admit it",
+      "Its true name is longer than recorded history", "It is waiting for something that will not happen for another 900 years"
+    ]
+  };
+
+  const fields = [
+    ["gender", "Gender"],
+    ["species", "Species"],
+    ["class", "Class"],
+    ["subclass", "Subclass"],
+    ["background", "Background"],
+    ["alignment", "Alignment"],
+    ["bestStat", "Best Stat"],
+    ["worstStat", "Worst Stat"],
+    ["hair", "Hair Colour"],
+    ["skin", "Skin Colour"],
+    ["body", "Body Type"],
+    ["fashion", "Fashion"],
+    ["weapon", "Favourite Weapon"],
+    ["worships", "Worships"],
+    ["personality", "Personality Based On"],
+    ["fear", "Fear"],
+    ["flaw", "Flaw"],
+    ["quirk", "Weird Quirk"],
+    ["secret", "Secret"]
+  ];
+
+  const state = Object.fromEntries(fields.map(([key]) => [key, { value: "", locked: false }]));
+
+  function randomItem(array) {
+    return array[Math.floor(Math.random() * array.length)];
+  }
+
+  function isEldritch() {
+    return state.gender.value.startsWith("Eldritch Abomination");
+  }
+
+  function randomSkin() {
+    const species = state.species.value;
+    const fantasySpecies = ["Aasimar","Astral Elf","Autognome","Changeling","Deep Gnome","Dhampir","Dragonborn","Duergar","Eladrin","Fairy","Genasi","Giff","Githyanki","Githzerai","Grung","Hexblood","Kalashtar","Kenku","Lizardfolk","Locathah","Plasmoid","Reborn","Sea Elf","Shadar-kai","Simic Hybrid","Thri-kreen","Tiefling","Triton","Vedalken","Warforged","Yuan-ti"];
+    if (isEldritch()) return randomItem(DATA.eldritchSkin);
+    if (fantasySpecies.includes(species)) return randomItem([...DATA.skinHumanlike, ...DATA.skinFantasy]);
+    return randomItem(DATA.skinHumanlike);
+  }
+
+  function randomBody() {
+    if (isEldritch() && Math.random() < 0.6) return randomItem(DATA.eldritchBody);
+    return `${randomItem(DATA.heights)}, ${randomItem(DATA.builds)} and ${randomItem(DATA.shapes)}`;
+  }
+
+  function generateField(key) {
+    switch (key) {
+      case "gender": return randomItem(DATA.genders);
+      case "species": return randomItem(DATA.species);
+      case "class": return randomItem(DATA.classes);
+      case "subclass": return state.class.value ? randomItem(DATA.subclasses[state.class.value] || []) : "";
+      case "background": return randomItem(DATA.backgrounds);
+      case "alignment": return randomItem(DATA.alignments);
+      case "bestStat": return randomItem(DATA.stats);
+      case "worstStat": {
+        let result = randomItem(DATA.stats);
+        while (result === state.bestStat.value) result = randomItem(DATA.stats);
+        return result;
+      }
+      case "hair": return isEldritch() && Math.random() < 0.7 ? randomItem(DATA.eldritchHair) : randomItem(DATA.hair);
+      case "skin": return randomSkin();
+      case "body": return randomBody();
+      case "fashion": return randomItem(DATA.fashion);
+      case "weapon": return randomItem(DATA.weapons);
+      case "worships": return randomItem(DATA.worships);
+      case "personality": return randomItem(DATA.personalities);
+      case "fear": return randomItem(DATA.fears);
+      case "flaw": return randomItem(DATA.flaws);
+      case "quirk": return isEldritch() && Math.random() < 0.5 ? randomItem(DATA.eldritchQuirks) : randomItem(DATA.quirks);
+      case "secret": return isEldritch() && Math.random() < 0.45 ? randomItem(DATA.eldritchSecrets) : randomItem(DATA.secrets);
+      default: return "";
+    }
+  }
+
+  function render() {
+    const wrap = document.getElementById("generator");
+    wrap.innerHTML = "";
+
+    for (const [key, label] of fields) {
+      const row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML = `
+        <button class="label" data-action="reroll" data-key="${key}" title="Roll ${label}" aria-label="Roll ${label}">${label}</button>
+        <div class="value" id="value-${key}">${state[key].value || ""}</div>
+        <button class="icon-btn ${state[key].locked ? "locked" : ""}" data-action="lock" data-key="${key}" title="${state[key].locked ? "Unlock" : "Lock"}" aria-label="${state[key].locked ? "Unlock" : "Lock"} ${label}">${state[key].locked ? "🔒" : "🔓"}</button>
+        <button class="icon-btn delete-btn" data-action="clear" data-key="${key}" title="Clear ${label}" aria-label="Clear ${label}">✕</button>`;
+      wrap.appendChild(row);
+    }
+  }
+
+  function generateAll() {
+    if (!state.gender.locked) state.gender.value = generateField("gender");
+    if (!state.species.locked) state.species.value = generateField("species");
+    if (!state.class.locked) state.class.value = generateField("class");
+    if (!state.subclass.locked) state.subclass.value = generateField("subclass");
+    if (!state.background.locked) state.background.value = generateField("background");
+    if (!state.alignment.locked) state.alignment.value = generateField("alignment");
+    if (!state.bestStat.locked) state.bestStat.value = generateField("bestStat");
+    if (!state.worstStat.locked) state.worstStat.value = generateField("worstStat");
+    if (!state.hair.locked) state.hair.value = generateField("hair");
+    if (!state.skin.locked) state.skin.value = generateField("skin");
+    if (!state.body.locked) state.body.value = generateField("body");
+    if (!state.fashion.locked) state.fashion.value = generateField("fashion");
+    if (!state.weapon.locked) state.weapon.value = generateField("weapon");
+    if (!state.worships.locked) state.worships.value = generateField("worships");
+    if (!state.personality.locked) state.personality.value = generateField("personality");
+    if (!state.fear.locked) state.fear.value = generateField("fear");
+    if (!state.flaw.locked) state.flaw.value = generateField("flaw");
+    if (!state.quirk.locked) state.quirk.value = generateField("quirk");
+    if (!state.secret.locked) state.secret.value = generateField("secret");
+    render();
+  }
+
+  document.getElementById("generator").addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-key]");
+    if (!button) return;
+    const key = button.dataset.key;
+
+    if (button.dataset.action === "lock") {
+      state[key].locked = !state[key].locked;
+      render();
+      return;
+    }
+
+    if (button.dataset.action === "clear") {
+      state[key].value = "";
+      render();
+      return;
+    }
+
+    if (button.dataset.action === "reroll") {
+      state[key].value = generateField(key);
+      render();
+    }
+  });
+
+  document.getElementById("generateAll").addEventListener("click", generateAll);
+
+  document.getElementById("clearAll").addEventListener("click", () => {
+    for (const key of Object.keys(state)) {
+      state[key].value = "";
+    }
+    render();
+  });
+
+  document.getElementById("unlockAll").addEventListener("click", () => {
+    for (const key of Object.keys(state)) state[key].locked = false;
+    render();
+  });
+
+  document.getElementById("copyCharacter").addEventListener("click", async () => {
+    const divider = "----------------------------------------";
+    const lines = [
+      "TITT'S QUESTIONABLY RELIABLE CHARACTER PROFILE",
+      divider,
+      ...fields.map(([key, label]) => `${label}: ${state[key].value || ""}`),
+      divider
+    ];
+
+    const profileText = lines.join("\n");
+
+    try {
+      await navigator.clipboard.writeText(profileText);
+      const toast = document.getElementById("toast");
+      toast.textContent = "Character profile copied!";
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 1400);
+    } catch {
+      const blob = new Blob([profileText], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "titts-character-profile.txt";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+  });
+
+  function resetToBlank() {
+    for (const key of Object.keys(state)) {
+      state[key].value = "";
+      state[key].locked = false;
+    }
+    render();
+  }
+
+  // Always begin with a completely empty generator, including when the browser
+  // restores the page from its back/forward cache.
+  window.addEventListener("pageshow", resetToBlank);
+</script>
+</body>
+</html>
